@@ -40,10 +40,10 @@ const extractMessageFromThread = (
   return messageText;
 };
 
-// FIX: 一つコメントが投稿されたら二回下記が実行される模様
+// FIX: 一つコメントが投稿されたら二回triggerが走ってしまう
 // そのため、同じメッセージを二回連続で送信したら流れないようになっている。
 const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
-  console.log("[saveComment] MutationObserver triggered");
+  console.log("[saveComment] MutationObserver triggered", Date.now());
   try {
     const addedNode = mutations[0].addedNodes?.[0];
 
@@ -83,8 +83,16 @@ const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  observer.observe(document.body, {
-    subtree: true,
-    childList: true,
-  });
+  // 不要な発火を防ぐため、監視対象DOMをThreadに限定する
+  const checkThread = setInterval(() => {
+    const thread = document.querySelector(CHAT_SELECTOR_OBJ.thread);
+    if (thread) {
+      clearInterval(checkThread);
+        observer.observe(thread, {
+        subtree: true,
+        childList: true,
+      });
+      console.log("[saveComment] Started observing thread");
+    }
+  }, 100);
 });
