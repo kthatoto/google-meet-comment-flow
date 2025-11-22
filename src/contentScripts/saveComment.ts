@@ -18,27 +18,21 @@ const extractMessageFromThread = (
   thread: Element | null
 ): string | undefined => {
   if (!thread || thread.isEqualNode(prevThread)) {
-    console.log("[saveComment] Skipping - same thread");
     return;
   }
 
   prevThread = thread.cloneNode(true);
 
   const messageNodes = thread.querySelectorAll(CHAT_SELECTOR_OBJ.message);
-  console.log("[saveComment] messageNodes:", messageNodes);
-  console.log("[saveComment] messageNodes.length:", messageNodes.length);
 
   if (messageNodes.length === 0) return;
 
   const messageNode = messageNodes[messageNodes.length - 1];
-  console.log("[saveComment] Latest message node:", messageNode);
 
   const messageText = messageNode.textContent || "";
-  console.log("[saveComment] Message text:", messageText);
 
   // 同じメッセージを重複して送信しないようにチェック
   if (messageText === lastMessageId) {
-    console.log("[saveComment] Skipping - duplicate message");
     return;
   }
 
@@ -46,7 +40,10 @@ const extractMessageFromThread = (
   return messageText;
 };
 
+// FIX: 一つコメントが投稿されたら二回下記が実行される模様
+// そのため、同じメッセージを二回連続で送信したら流れないようになっている。
 const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
+  console.log("[saveComment] MutationObserver triggered");
   try {
     const addedNode = mutations[0].addedNodes?.[0];
 
@@ -62,19 +59,12 @@ const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
       method: "getIsEnabledStreaming",
     });
 
-    console.log("[saveComment] isEnabledStreaming:", isEnabledStreaming);
-
     if (!isEnabledStreaming) return;
 
     const container = document.querySelector(CHAT_SELECTOR_OBJ.container);
     const thread = document.querySelector(CHAT_SELECTOR_OBJ.thread);
 
-    console.log("[saveComment] container:", container);
-    console.log("[saveComment] thread:", thread);
-
     const message = extractMessageFromThread(thread)
-
-    console.log("[saveComment] Extracted message:", message);
 
     if (!message) return;
 
@@ -85,7 +75,6 @@ const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
   } catch (e) {
     // Extension context invalidated エラーの場合はオブザーバーを停止
     if (e instanceof Error && e.message.includes("Extension context invalidated")) {
-      console.log("[saveComment] Extension context invalidated, disconnecting observer");
       observer.disconnect();
       return;
     }
@@ -94,7 +83,6 @@ const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("[saveComment] DOMContentLoaded - Starting observer");
   observer.observe(document.body, {
     subtree: true,
     childList: true,
