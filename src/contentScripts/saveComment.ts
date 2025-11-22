@@ -1,7 +1,6 @@
 import { decodeHTMLSpecialWord } from "./utils/decodeHTMLSpecialWord";
 
 let prevThread: Node;
-let lastMessageId: string = "";
 
 const CHAT_SELECTOR_OBJ = {
   // スレッド（コメントのリスト）
@@ -27,17 +26,11 @@ const extractMessageFromThread = (
 
   const messageText = messageNode.textContent || "";
 
-  // 同じメッセージを重複して送信しないようにチェック
-  if (messageText === lastMessageId) {
-    return;
-  }
-
-  lastMessageId = messageText;
   return messageText;
 };
 
-// FIX: 一つコメントが投稿されたら二回triggerが走ってしまう
-// そのため、同じメッセージを二回連続で送信したら流れないようになっている。
+// FIX: 自分で一つコメントした場合、二回triggerが走ってしまうので二回流れてしまう。
+// 他人のコメントの場合は一回しか走らないので問題ない。
 const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
   console.log("[saveComment] MutationObserver triggered", Date.now());
   try {
