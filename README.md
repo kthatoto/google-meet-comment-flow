@@ -10,7 +10,7 @@
 
 `npm run build`
 
-これにより、`/dist`が作成されます。
+これにより、`/dist`が作成されます。（Viteによるchrome拡張機能のbuild）
 
 `chrome://extensions/` = 拡張機能管理ページを開き、右上の「デベロッパー モード」ボタンを ON
 
