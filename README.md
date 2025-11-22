@@ -29,9 +29,9 @@ Google Meet の画面を起動するとデフォルトで有効化されるよ�
 <img width="362" height="206" alt="image" src="https://github.com/user-attachments/assets/8d0a338a-d9e5-415c-b9d0-68a3451e3f61" />
 
 動作のためには、下記画像左側のようにチャット欄を一回開く必要があります。チャット欄を一度開くことで初めてコメントの DOM が反映されるようになります。
+ここでコメントを送信すると、focus しているchromeタブ上に流れるようになります。チャット欄が Pop up の場合でも動作します。
 
-ここでコメントを送信すると、focus しているchromeタブ上に流れるようになります。
-チャット欄が Pop up の場合でも動作します。
+尚、既知のバグとして、自分でコメントを投稿した場合二回triggerが走ってしまい二回コメントが流れますが、他人のコメントの場合は一回しか走らないので問題ありません。
 
 一人で動作確認する場合は別アカウント、別デバイスで Meet に入り、他人としてコメントを再現すると良いでしょう。
 <img width="2540" height="1395" alt="image" src="https://github.com/user-attachments/assets/c4f23de2-f9a6-4097-bfab-bd714ee59254" />
