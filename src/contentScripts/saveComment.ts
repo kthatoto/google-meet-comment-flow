@@ -1,11 +1,9 @@
 import { decodeHTMLSpecialWord } from "./utils/decodeHTMLSpecialWord";
 
-let prevThread: Node;
+let prevMessageNodesCount = 0;
 
 const CHAT_SELECTOR_OBJ = {
-  // スレッド（コメントのリスト）
-  thread: 'div[jsname="xySENc"].Ge9Kpc.z38b6',
-  // 個別のコメント
+  // 個別のコメントリスト
   messageNodes: 'div[jsname="dTKtvb"]',
 } as const;
 
@@ -13,28 +11,21 @@ const POPUP_SELECTOR_OBJ = {
   messageNodes: `div.huGk4e`,
 } as const;
 
-const extractMessageFromThread = (
-  thread: Element | null
-): string | undefined => {
-  if (!thread || thread.isEqualNode(prevThread)) {
-    return;
-  }
-
-  prevThread = thread.cloneNode(true);
-
-  const messageNodes = thread.querySelectorAll(CHAT_SELECTOR_OBJ.messageNodes);
-
+const extractMessageFromThread = (): string | undefined => {
+  const messageNodes = document.querySelectorAll(CHAT_SELECTOR_OBJ.messageNodes);
   if (messageNodes.length === 0) return;
 
-  const messageNode = messageNodes[messageNodes.length - 1];
+  if (prevMessageNodesCount === messageNodes.length) return;
 
-  const messageText = messageNode.textContent || "";
+  prevMessageNodesCount = messageNodes.length;
+
+  const latestMessageNode = messageNodes[messageNodes.length - 1];
+
+  const messageText = latestMessageNode.textContent || "";
 
   return messageText;
 };
 
-// FIX: 自分で一つコメントした場合、二回triggerが走ってしまうので二回流れてしまう。
-// 他人のコメントの場合は一回しか走らないので問題ない。
 const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
   try {
     const addedNode = mutations[0].addedNodes?.[0];
@@ -55,13 +46,12 @@ const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
 
     const popupMessageNodes = document.querySelectorAll(POPUP_SELECTOR_OBJ.messageNodes);
 
-    const thread = document.querySelector(CHAT_SELECTOR_OBJ.thread);
     let message: string | undefined;
 
     if (popupMessageNodes.length > 0) {
       message = popupMessageNodes[popupMessageNodes.length - 1].textContent || "";
     } else {
-      message = extractMessageFromThread(thread)
+      message = extractMessageFromThread();
     }
 
     if (!message) return;
