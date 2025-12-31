@@ -1,6 +1,6 @@
 import { decodeHTMLSpecialWord } from "./utils/decodeHTMLSpecialWord";
 
-let prevMessageNodesCount = 0;
+let prevMessage = "";
 
 const CHAT_SELECTOR_OBJ = {
   // 個別のコメントリスト
@@ -14,10 +14,6 @@ const POPUP_SELECTOR_OBJ = {
 const extractMessageFromThread = (): string | undefined => {
   const messageNodes = document.querySelectorAll(CHAT_SELECTOR_OBJ.messageNodes);
   if (messageNodes.length === 0) return;
-
-  if (prevMessageNodesCount === messageNodes.length) return;
-
-  prevMessageNodesCount = messageNodes.length;
 
   const latestMessageNode = messageNodes[messageNodes.length - 1];
 
@@ -55,6 +51,10 @@ const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
     }
 
     if (!message) return;
+
+    if (message === prevMessage) return;
+
+    prevMessage = message;
 
     chrome.runtime.sendMessage({
       method: "setComment",
