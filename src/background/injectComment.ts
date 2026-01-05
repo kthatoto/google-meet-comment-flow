@@ -73,12 +73,24 @@ export const injectComment = async (message: string) => {
   comment.style["whiteSpace"] = "nowrap";
   comment.style["lineHeight"] = "initial";
 
+  const getDuration = (messageLength: number): number => {
+    if (messageLength < 50) {
+      return 5000;
+    } else if (messageLength < 100) {
+      return 10000;
+    } else {
+      return 15000;
+    }
+  };
+
+  const duration = getDuration(message.length);
+
   const streamCommentUI = comment.animate(
     {
       left: `${-comment.offsetWidth}px`,
     },
     {
-      duration: 6000,
+      duration: duration,
       easing: "linear",
     }
   );
