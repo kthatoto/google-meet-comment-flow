@@ -6,9 +6,13 @@
 
 この Project を clone します。root で
 
-`npm install`
+```sh
+npm install
+```
 
-`npm run build`
+```sh
+npm run build
+```
 
 これにより、`/dist`が作成されます。（Vite による chrome 拡張機能の build）
 
