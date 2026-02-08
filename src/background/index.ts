@@ -9,6 +9,21 @@ const StorageKeys = {
   IsEnabledStreaming: "isEnabledStreaming",
 } as const;
 
+// アイコンバッジを更新
+const updateBadge = (isEnabled: boolean) => {
+  if (isEnabled) {
+    chrome.action.setBadgeText({ text: "ON" });
+    chrome.action.setBadgeBackgroundColor({ color: "#4CAF50" }); // 緑
+  } else {
+    chrome.action.setBadgeText({ text: "" });
+  }
+};
+
+// 起動時に現在の状態を反映
+chrome.storage.local.get([StorageKeys.IsEnabledStreaming]).then((res) => {
+  updateBadge(res[StorageKeys.IsEnabledStreaming] === true);
+});
+
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   switch (request.method) {
     case "setComment":
@@ -28,7 +43,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
           chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
             func: injectComment,
-            args: [res[StorageKeys.Comment], res[StorageKeys.CommentColor]],
+            args: [res[StorageKeys.Comment], res[StorageKeys.CommentColor] ?? null],
           });
         });
       });
@@ -67,6 +82,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
       chrome.storage.local.set({
         isEnabledStreaming: request.value,
       });
+      updateBadge(request.value);
       return true;
     case "getIsEnabledStreaming":
       chrome.storage.local.get([StorageKeys.IsEnabledStreaming]).then((res) => {
@@ -79,6 +95,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         const current = res[StorageKeys.IsEnabledStreaming] ?? false;
         const newValue = !current;
         chrome.storage.local.set({ isEnabledStreaming: newValue });
+        updateBadge(newValue);
         sendResponse(newValue);
       });
       return true;
