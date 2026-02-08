@@ -1,4 +1,4 @@
-export const injectComment = async (message: string) => {
+export const injectComment = async (message: string, commentColor?: string) => {
   const screenHeight = window.innerHeight;
   const screenWidth = window.innerWidth;
 
@@ -62,11 +62,36 @@ export const injectComment = async (message: string) => {
     method: "getColor",
   });
 
+  const storedFontFamily = await chrome.runtime.sendMessage({
+    method: "getFontFamily",
+  });
+
+  // Load Google Font if specified
+  if (storedFontFamily) {
+    const fontId = `google-meet-comment-flow-font-${storedFontFamily.replace(/\s+/g, "-")}`;
+    if (!document.getElementById(fontId)) {
+      const link = document.createElement("link");
+      link.id = fontId;
+      link.rel = "stylesheet";
+      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(storedFontFamily)}&display=swap`;
+      document.head.appendChild(link);
+    }
+  }
+
   comment.style["left"] = commentStyle["left"];
   comment.style["top"] = commentStyle["top"];
   comment.style["fontSize"] = commentStyle["fontSize"];
 
-  comment.style["color"] = storedColorMessage || "green";
+  // Use commentColor (from user's Google icon) if color is set to "auto", otherwise use stored color
+  const effectiveColor = storedColorMessage === "auto" && commentColor
+    ? commentColor
+    : (storedColorMessage || "green");
+  comment.style["color"] = effectiveColor;
+
+  // Apply font family
+  if (storedFontFamily) {
+    comment.style["fontFamily"] = `"${storedFontFamily}", sans-serif`;
+  }
 
   comment.style["position"] = "absolute";
   comment.style["zIndex"] = "2147483647";
