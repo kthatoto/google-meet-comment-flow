@@ -19,15 +19,14 @@ const FontSizes = { Xs: "XS", S: "S", M: "M", L: "L", Xl: "XL" } as const;
 
 type FontSize = typeof FontSizes[keyof typeof FontSizes];
 
-// Google Fonts options (distinctive fonts for demonstration)
+// Google Fonts options
 const FontFamilies = {
   Default: "",
-  "Dela Gothic One": "Dela Gothic One",
-  "Hachi Maru Pop": "Hachi Maru Pop",
-  "Reggae One": "Reggae One",
-  "RocknRoll One": "RocknRoll One",
-  "Yusei Magic": "Yusei Magic",
-  "Zen Maru Gothic": "Zen Maru Gothic",
+  "Noto Sans JP": "Noto Sans JP",
+  "M PLUS 1p": "M PLUS 1p",
+  "M PLUS Rounded 1c": "M PLUS Rounded 1c",
+  "BIZ UDGothic": "BIZ UDGothic",
+  "Kosugi Maru": "Kosugi Maru",
 } as const;
 
 type FontFamily = typeof FontFamilies[keyof typeof FontFamilies];
@@ -36,7 +35,7 @@ const App = () => {
   const [color, setColor] = useState<Color>(Colors.Auto);
 
   const [fontSize, setFontSize] = useState<FontSize>(FontSizes.L);
-  const [fontFamily, setFontFamily] = useState<FontFamily>(FontFamilies["Dela Gothic One"]);
+  const [fontFamily, setFontFamily] = useState<FontFamily>(FontFamilies["Noto Sans JP"]);
   const [isEnabledStreaming, setIsEnabledStreaming] = useState<boolean>(false);
 
   const isColor = (value: string): value is Color => {
