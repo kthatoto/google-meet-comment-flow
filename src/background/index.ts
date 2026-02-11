@@ -26,25 +26,15 @@ chrome.storage.local.get([StorageKeys.IsEnabledStreaming]).then((res) => {
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   switch (request.method) {
-    case "setComment":
-      chrome.storage.local.set({
-        comment: request.value,
-        commentColor: request.color,
-      });
-      return true;
-    case "deleteComment":
-      chrome.storage.local.remove([StorageKeys.Comment]);
-      return true;
-    case "injectCommentToFocusedTab":
-      chrome.storage.local.get([StorageKeys.Comment, StorageKeys.CommentColor]).then((res) => {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (!tabs[0]?.id || !res[StorageKeys.Comment]) return;
+    case "injectComment":
+      // 直接メッセージを受け取って即座に表示（storageを経由しない）
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs[0]?.id || !request.value) return;
 
-          chrome.scripting.executeScript({
-            target: { tabId: tabs[0].id },
-            func: injectComment,
-            args: [res[StorageKeys.Comment], res[StorageKeys.CommentColor] ?? null],
-          });
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: injectComment,
+          args: [request.value, request.color ?? null],
         });
       });
       return true;

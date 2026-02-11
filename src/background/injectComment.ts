@@ -83,9 +83,12 @@ export const injectComment = async (message: string, commentColor?: string) => {
   comment.style["fontSize"] = commentStyle["fontSize"];
 
   // Use commentColor (from user's Google icon) if color is set to "auto", otherwise use stored color
-  const effectiveColor = storedColorMessage === "auto" && commentColor
-    ? commentColor
-    : (storedColorMessage || "green");
+  let effectiveColor: string;
+  if (storedColorMessage === "auto") {
+    effectiveColor = commentColor || "green"; // autoだけどアイコン色がない場合はgreen
+  } else {
+    effectiveColor = storedColorMessage || "green";
+  }
   comment.style["color"] = effectiveColor;
 
   // Apply font family

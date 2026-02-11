@@ -1,7 +1,9 @@
 import { decodeHTMLSpecialWord } from "./utils/decodeHTMLSpecialWord";
 
-// 処理済みメッセージを記録
-const processedMessages = new Set<string>();
+// 処理済みのDOMノードを記録（テキストではなくノード自体）
+const processedNodes = new WeakSet<Element>();
+// 初期化済みフラグ
+let initialized = false;
 
 const CHAT_SELECTOR_OBJ = {
   messageNodes: 'div[jsname="dTKtvb"]',
@@ -71,34 +73,43 @@ const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
       return;
     }
 
+    // メッセージノードを取得
+    const popupMessageNodes = document.querySelectorAll(POPUP_SELECTOR_OBJ.messageNodes);
+    const chatMessageNodes = document.querySelectorAll(CHAT_SELECTOR_OBJ.messageNodes);
+    const messageNodes = popupMessageNodes.length > 0 ? popupMessageNodes : chatMessageNodes;
+
+    // 初回は既存ノードを全て処理済みとしてマーク（流さない）
+    if (!initialized && messageNodes.length > 0) {
+      for (const node of messageNodes) {
+        processedNodes.add(node);
+      }
+      initialized = true;
+      return;
+    }
+
     const isEnabledStreaming = await chrome.runtime.sendMessage({
       method: "getIsEnabledStreaming",
     });
 
     if (!isEnabledStreaming) return;
 
-    // メッセージノードを取得
-    const popupMessageNodes = document.querySelectorAll(POPUP_SELECTOR_OBJ.messageNodes);
-    const chatMessageNodes = document.querySelectorAll(CHAT_SELECTOR_OBJ.messageNodes);
-    const messageNodes = popupMessageNodes.length > 0 ? popupMessageNodes : chatMessageNodes;
-
     // 各メッセージをチェック
     for (const node of messageNodes) {
+      // 既に処理済みのノードならスキップ
+      if (processedNodes.has(node)) continue;
+
       const message = node.textContent || "";
       if (!message) continue;
 
-      // 既に処理済みならスキップ
-      if (processedMessages.has(message)) continue;
-
       // 処理済みとしてマーク
-      processedMessages.add(message);
+      processedNodes.add(node);
 
       // アイコン色を取得
       const iconColor = extractIconColor(node);
 
-      // 送信
+      // 直接表示（storageを経由しない）
       chrome.runtime.sendMessage({
-        method: "setComment",
+        method: "injectComment",
         value: decodeHTMLSpecialWord(message),
         color: iconColor,
       });
@@ -112,22 +123,7 @@ const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
   }
 });
 
-// 初期化時に既存メッセージを処理済みとしてマーク
-const initializeProcessedMessages = () => {
-  const popupMessageNodes = document.querySelectorAll(POPUP_SELECTOR_OBJ.messageNodes);
-  const chatMessageNodes = document.querySelectorAll(CHAT_SELECTOR_OBJ.messageNodes);
-  const messageNodes = popupMessageNodes.length > 0 ? popupMessageNodes : chatMessageNodes;
-
-  for (const node of messageNodes) {
-    const message = node.textContent || "";
-    if (message) {
-      processedMessages.add(message);
-    }
-  }
-};
-
 document.addEventListener("DOMContentLoaded", () => {
-  initializeProcessedMessages();
   observer.observe(document.body, {
     subtree: true,
     childList: true,

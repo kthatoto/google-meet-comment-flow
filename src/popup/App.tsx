@@ -23,10 +23,6 @@ type FontSize = typeof FontSizes[keyof typeof FontSizes];
 const FontFamilies = {
   Default: "",
   "Noto Sans JP": "Noto Sans JP",
-  "M PLUS 1p": "M PLUS 1p",
-  "M PLUS Rounded 1c": "M PLUS Rounded 1c",
-  "BIZ UDGothic": "BIZ UDGothic",
-  "Kosugi Maru": "Kosugi Maru",
 } as const;
 
 type FontFamily = typeof FontFamilies[keyof typeof FontFamilies];

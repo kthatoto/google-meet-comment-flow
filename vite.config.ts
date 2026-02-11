@@ -16,10 +16,7 @@ const manifest = defineManifest({
   content_scripts: [
     {
       matches: ["https://meet.google.com/*"],
-      js: [
-        "src/contentScripts/saveComment.ts",
-        "src/contentScripts/streamComment.ts",
-      ],
+      js: ["src/contentScripts/saveComment.ts"],
       run_at: "document_start",
     },
   ],
