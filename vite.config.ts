@@ -6,7 +6,7 @@ const manifest = defineManifest({
   manifest_version: 3,
   name: "Google Meet Comment Flow",
   version: "1.0.6",
-  permissions: ["storage", "scripting"],
+  permissions: ["storage", "scripting", "webNavigation"],
   host_permissions: ["http://*/*", "https://*/*"],
   action: {
     default_popup: "index.html",

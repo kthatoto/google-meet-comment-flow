@@ -1,4 +1,5 @@
 import { injectComment } from "./injectComment";
+import { chatObserverFunc } from "./chatObserver";
 
 const StorageKeys = {
   Comment: "comment",
@@ -23,6 +24,25 @@ const updateBadge = (isEnabled: boolean) => {
 chrome.storage.local.get([StorageKeys.IsEnabledStreaming]).then((res) => {
   updateBadge(res[StorageKeys.IsEnabledStreaming] === true);
 });
+
+// chat.google.com iframe が読み込まれた時にchatObserverを注入
+const injectedFrames = new Set<string>();
+
+chrome.webNavigation.onCompleted.addListener(
+  (details) => {
+    const frameKey = `${details.tabId}-${details.frameId}`;
+    if (injectedFrames.has(frameKey)) return;
+    injectedFrames.add(frameKey);
+
+    chrome.scripting.executeScript({
+      target: { tabId: details.tabId, frameIds: [details.frameId] },
+      func: chatObserverFunc,
+    }).catch(() => {
+      // フレームが閉じられた場合などは無視
+    });
+  },
+  { url: [{ hostEquals: "chat.google.com" }] }
+);
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   switch (request.method) {

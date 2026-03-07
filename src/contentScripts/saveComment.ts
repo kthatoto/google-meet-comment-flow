@@ -1,51 +1,12 @@
 import { decodeHTMLSpecialWord } from "./utils/decodeHTMLSpecialWord";
 
-// 処理済みのDOMノードを記録（テキストではなくノード自体）
+// meet.google.com 上で動作するcontent script
+// - キーボードショートカット (Ctrl+Shift+S)
+// - ポップアップ通知の監視 (チャットパネルが閉じている時に表示される通知)
+// ※ チャットメッセージ本体は chat.google.com iframe内で chatObserver.ts が監視
+
 const processedNodes = new WeakSet<Element>();
-// 初期化済みフラグ
 let initialized = false;
-
-const CHAT_SELECTOR_OBJ = {
-  messageNodes: 'div[jsname="dTKtvb"]',
-} as const;
-
-const POPUP_SELECTOR_OBJ = {
-  messageNodes: `div.huGk4e`,
-} as const;
-
-// Get the icon color from a user's avatar element
-const extractIconColor = (messageNode: Element): string | undefined => {
-  const parent = messageNode.closest('[data-sender-id]') || messageNode.parentElement?.parentElement?.parentElement;
-  if (!parent) return undefined;
-
-  const avatarSelectors = [
-    'div[style*="background-color"]',
-    'div[data-iph] div[style*="background"]',
-    '.kssMUb',
-  ];
-
-  for (const selector of avatarSelectors) {
-    const avatarEl = parent.querySelector(selector);
-    if (avatarEl) {
-      const style = window.getComputedStyle(avatarEl);
-      const bgColor = style.backgroundColor;
-      if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-        return bgColor;
-      }
-    }
-  }
-
-  const styledElements = parent.querySelectorAll('[style*="background"]');
-  for (const el of styledElements) {
-    const style = window.getComputedStyle(el);
-    const bgColor = style.backgroundColor;
-    if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent' && bgColor !== 'rgb(255, 255, 255)') {
-      return bgColor;
-    }
-  }
-
-  return undefined;
-};
 
 // Keyboard shortcut handler (Ctrl+Shift+S to toggle streaming)
 document.addEventListener("keydown", async (e) => {
@@ -73,14 +34,16 @@ const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
       return;
     }
 
-    // メッセージノードを取得
-    const popupMessageNodes = document.querySelectorAll(POPUP_SELECTOR_OBJ.messageNodes);
-    const chatMessageNodes = document.querySelectorAll(CHAT_SELECTOR_OBJ.messageNodes);
-    const messageNodes = popupMessageNodes.length > 0 ? popupMessageNodes : chatMessageNodes;
+    // ポップアップ通知を検出 (チャットパネルが閉じている時の通知バブル)
+    // meet.google.com上に表示されるチャット通知を監視
+    const popupNodes = document.querySelectorAll(
+      'div[jsname="ocqpFe"] div[jsname="bgckF"], div[data-message-text]'
+    );
 
-    // 初回は既存ノードを全て処理済みとしてマーク（流さない）
-    if (!initialized && messageNodes.length > 0) {
-      for (const node of messageNodes) {
+    if (popupNodes.length === 0) return;
+
+    if (!initialized && popupNodes.length > 0) {
+      for (const node of popupNodes) {
         processedNodes.add(node);
       }
       initialized = true;
@@ -93,25 +56,17 @@ const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
 
     if (!isEnabledStreaming) return;
 
-    // 各メッセージをチェック
-    for (const node of messageNodes) {
-      // 既に処理済みのノードならスキップ
+    for (const node of popupNodes) {
       if (processedNodes.has(node)) continue;
 
       const message = node.textContent || "";
       if (!message) continue;
 
-      // 処理済みとしてマーク
       processedNodes.add(node);
 
-      // アイコン色を取得
-      const iconColor = extractIconColor(node);
-
-      // 直接表示（storageを経由しない）
       chrome.runtime.sendMessage({
         method: "injectComment",
         value: decodeHTMLSpecialWord(message),
-        color: iconColor,
       });
     }
   } catch (e) {
